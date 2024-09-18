@@ -26,20 +26,19 @@ import os
 
 
 def folder_system():
-    # Diretório base da pasta do projeto
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):  # Se estiver rodando como executável
+        base_path = sys._MEIPASS
+    else:  
+        base_path = os.path.dirname(os.path.abspath(__file__))
     
-    # Caminhos para as pastas 'dados' e 'logs'
     dados_path = os.path.join(base_path, 'dados')
     logs_path = os.path.join(base_path, 'logs')
     
-    # Criação das pastas, se não existirem
     os.makedirs(dados_path, exist_ok=True)
     os.makedirs(logs_path, exist_ok=True)
 
     return dados_path, logs_path
 
-# Obtém os caminhos dos diretórios ao iniciar
 dados_path, logs_path = folder_system()
 
 def generate_unique_file_name(url):
