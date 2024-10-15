@@ -1,3 +1,4 @@
+import re
 import time
 from arquivos import separation_line, timeout
 from selenium.webdriver.common.by import By
@@ -109,7 +110,19 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
                 return "Texto não encontrado em todas as tentativas";
             }
         """)
-    ia_response = response_container
+    time.sleep(2)
+    # Se a resposta foi encontrada, filtra para pegar apenas o que está dentro das aspas
+    if response_container:
+        # Usando expressão regular para encontrar o texto dentro das aspas
+        match = re.search(r'"(.*?)"', response_container)
+        if match:
+            ia_response = match.group(1)  # Captura apenas o texto dentro das aspas
+        else:
+            ia_response = "Texto da IA não encontrado dentro das aspas"
+    else:
+        ia_response = "Texto não encontrado em todas as tentativas"
+
+    ia_response = ia_response
     print(separation_line())
     print(f"Resposta da IA: {ia_response}")
     time.sleep(2)

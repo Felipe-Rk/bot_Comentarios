@@ -78,6 +78,25 @@ def generate_log_block(url, comentario_id, nome_usuario, comentario_texto):
     
     print(f"Log de bloqueio gerado: {log_file}")
 
+def generate_log_other_content(url, comentario_id, nome_usuario, tipo_conteudo, comentario):
+    log_file = os.path.join(logs_path, f"texto_outro_conteudo_ignorado_{hashlib.md5(url.encode()).hexdigest()}.txt")
+    
+    data_hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    log_content = ( 
+        f"URL da Página: {url}\n"
+        f"ID do Comentário: {comentario_id}\n"
+        f"Nome do Usuário: {nome_usuario}\n"
+        f"Tipo de Conteúdo: {tipo_conteudo}\n"  # Agora registramos o tipo de conteúdo
+        f"Conteúdo: {comentario}\n "
+        f"Data e Hora: {data_hora}\n"
+        f"-----------------------------------\n"
+    )
+    
+    with open(log_file, 'a', encoding='utf-8') as f:
+        f.write(log_content)
+    
+    print(f"Log de bloqueio gerado: {log_file}")
+    
 def check_response_block(resposta_ia):
     return "Esse comentário não pode ser respondido" in resposta_ia
 

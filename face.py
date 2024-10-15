@@ -5,7 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
-from arquivos import check_response_block, upload_files_comments, generate_log_block, generate_unique_file_name, separation_line, save_comments, timeout, generate_log_block
+from arquivos import check_response_block, upload_files_comments, generate_log_block, generate_log_other_content, generate_unique_file_name, separation_line, save_comments, timeout, generate_log_block
 from chromeDriver import start_driver
 from decorador import capturar_erros, register_execucao
 from ia import get_answer_ia
@@ -112,20 +112,7 @@ def capture_comments(driver, url, current_user):
         except Exception:
             pass
 
-        user_name = container.find_element(By.XPATH, ".//a[contains(@class, 'x1i10hfl')]/span").text
-        # comment_link = container.find_element(By.XPATH, ".//a[contains(@class, 'x1i10hfl')]")
-        # comment_id = comment_link.get_attribute("href").split("comment_id=")[-1].split("&")[0]
-
-        # # Verifique se o ID extraído é válido (contém apenas números e tem 15+ dígitos)
-        # if not re.match(r'^\d{15,}$', comment_id):
-        #     # Se não for válido, use o fallback para extrair com regex
-        #     href_full = comment_link.get_attribute("href")
-        #     match = re.search(r'\d{15,}', href_full)
-        #     if match:
-        #         comment_id = match.group(0)
-        #     else:
-        #         comment_id = "comment_id não encontrado"
-        
+        user_name = container.find_element(By.XPATH, ".//a[contains(@class, 'x1i10hfl')]/span").text        
         comment_id = "comment_id não encontrado"
         links = container.find_elements(By.XPATH, ".//a[contains(@href, 'comment_id=')]")
         
@@ -133,15 +120,34 @@ def capture_comments(driver, url, current_user):
             href_full = link.get_attribute("href")
             if "comment_id=" in href_full:
                 comment_id = href_full.split("comment_id=")[-1].split("&")[0]
-                break
+                if re.match(r'^\d+$', comment_id):
+                            break
+                else:
+                    print()
+        else:
+            print()
+        # Tentativa de capturar o texto do comentário
         try:
             comment_text = container.find_element(By.XPATH, ".//div[contains(@class, 'x1lliihq')]/span/div").text
+            tipo_conteudo = "Texto"  # Define que o conteúdo é texto
         except Exception:
+            # Se não for possível capturar o texto, setar comment_text como None e identificar o tipo de conteúdo
             comment_text = None
+            try:
+                # Verifica se o comentário contém uma imagem
+                container.find_element(By.XPATH, ".//img")
+                tipo_conteudo = "Imagem"
+            except Exception:
+                try:
+                    container.find_element(By.XPATH, ".//video")
+                    tipo_conteudo = "Vídeo"
+                except Exception:
+
+                    tipo_conteudo = "Outro Conteúdo Não Textual"
 
         if comment_text is None:
-            print("Comentário contém uma imagem ou outro elemento não textual.")
-            generate_log_block(url, comment_id, user_name, "Comentário não textual (imagem ou avatar).")
+            print(f"Comentário contém um(a) {tipo_conteudo}.")
+            generate_log_other_content(url, comment_id, user_name, tipo_conteudo, comment_text)
             continue
         
         foi_respondido = check_response(container, current_user)
@@ -283,7 +289,7 @@ def main(url, current_user, personalized_message, log_bloqueio_file,filtro_ativo
     # driver.quit()
 
 if __name__ == "__main__":
-    url = 'https://www.facebook.com/photo/?fbid=914229407399311&set=a.547401260748796'
+    url = 'https://www.facebook.com/photo.php?fbid=143814774208809&set=pb.100057408622317.-2207520000&type=3'
     current_user = "Felipe Roiko"
     personalized_message = "Responda de forma breve, direta e descontraída." 
     log_bloqueio_file = "log_bloqueio.txt" 
