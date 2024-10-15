@@ -1,6 +1,7 @@
 import time
 from arquivos import separation_line, timeout
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from decorador import capturar_erros, register_execucao
 
@@ -20,10 +21,7 @@ def check_login(driver, IA):
         timeout(start_time)
         try:
             element = driver.execute_script("""
-                return document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
-                    .querySelector("#cib-conversation-main").shadowRoot
-                    .querySelector("#cib-chat-main > cib-welcome-container").shadowRoot
-                    .querySelector("div.muid-upsell > div");
+                return document.querySelector("button[title='Entrar']");
             """)
 
             if element:
@@ -32,7 +30,7 @@ def check_login(driver, IA):
                 continue
             else:
                 app_element = driver.execute_script("""
-                    return document.querySelector("#copilot_app_cta > span");
+                    return document.querySelector("textarea#userInput[placeholder='Mensagem para o Copilot']");
                 """)
 
                 if app_element:
@@ -76,50 +74,24 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
     prompt_text = remove_characters_outside_of_bmp(prompt_text)
 
     driver.switch_to.active_element.send_keys(prompt_text)
-    send_button = driver.execute_script("""
-        return document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
-                    .querySelector("#cib-action-bar-main").shadowRoot
-                    .querySelector("div > div.main-container > div > div.bottom-controls > div > div.bottom-right-controls > div.control.submit > button");
-    """)
-    send_button.click()
-    time.sleep(7)
-    response_container = driver.execute_script("""
+    driver.switch_to.active_element.send_keys(Keys.ENTER)
+    time.sleep(4)
+    response_container = driver.execute_script(""" 
         try {
-            return document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
-                        .querySelector("#cib-conversation-main").shadowRoot
-                        .querySelector("#cib-chat-main > cib-chat-turn").shadowRoot
-                        .querySelector("cib-message-group.response-message-group").shadowRoot
-                        .querySelector("cib-message").shadowRoot
-                        .querySelector("cib-shared > div")
-                        .querySelector(".ac-textBlock > p").innerText;
+            return document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerText;
         } catch (e) {
             return null;
         }
     """)
     if not response_container:
-        response_container = driver.execute_script("""
-            try {
-                return document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
-                            .querySelector("#cib-conversation-main").shadowRoot
-                            .querySelector("#cib-chat-main > cib-chat-turn").shadowRoot
-                            .querySelector("cib-message-group.response-message-group").shadowRoot
-                            .querySelector("cib-message[attributions]").shadowRoot
-                            .querySelector("cib-shared > div").innerText;
-            } catch (e) {
-                return "Texto não encontrado em ambas as formas";
-            }
-        """)
-    if not response_container or response_container == "Texto não encontrado em ambas as formas":
-        response_container = driver.execute_script("""
+        response_container = driver.execute_script(""" 
             try {
                 let message = document.evaluate(
-                    '//*[@id="cib-chat-main"]/cib-chat-turn//cib-message-group[2]', 
+                    '//*[@id="app"]/main/div[3]/div/div/div[2]/div/div[2]', 
                     document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 
                 if (message) {
-                    return message.shadowRoot
-                                .querySelector("cib-message").shadowRoot
-                                .querySelector("cib-shared > div").innerText;
+                    return message.innerText;
                 } else {
                     return "Texto não encontrado usando XPath";
                 }
@@ -127,20 +99,20 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
                 return "Texto não encontrado em todas as tentativas";
             }
         """)
+        
     if not response_container or response_container.startswith("Texto não encontrado"):
-        response_container = driver.execute_script("""
+        response_container = driver.execute_script(""" 
             try {
-                let message = document.querySelector("#b_sydConvCont > cib-serp").shadowRoot
-                            .querySelector("#cib-conversation-main").shadowRoot
-                            .querySelector("#cib-chat-main > cib-chat-turn").shadowRoot
-                            .querySelector("cib-message-group.response-message-group").shadowRoot
-                            .querySelector("cib-message").shadowRoot
-                            .querySelector("cib-shared > div").innerHTML;
+                let message = document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerHTML;
+                return message;
+            } catch (e) {
+                return "Texto não encontrado em todas as tentativas";
+            }
         """)
     ia_response = response_container
     print(separation_line())
     print(f"Resposta da IA: {ia_response}")
-    time.sleep(1)
+    time.sleep(2)
     driver.close()
     driver.switch_to.window(driver.window_handles[0])
     return ia_response
