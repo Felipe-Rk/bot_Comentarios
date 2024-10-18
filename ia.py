@@ -51,7 +51,7 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
     driver.switch_to.window(driver.window_handles[1])
     IA = 'https://copilot.microsoft.com/?showconv=1'
     driver.get(IA)
-    time.sleep(4)
+    time.sleep(10)
     
     # Verifica se o login já foi realizado
     if not login_verificado:
@@ -59,24 +59,26 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
         login_verificado = True 
 
     if not personalized_message:
-        personalized_message = "Responda de forma breve, direta e descontraída." 
+        personalized_message = " Responda de forma breve, direta e descontraída e não fique respondendo com a mesma mensagem sempre e não responda com nomes." 
         prompt_text = (
             f"{prompt_text}"  
-            f" message: {personalized_message} . Comentario: {comment_text}."
+            f"Não fique respondendo com a mesma mensagem sempre mensagem sobre a publicação e não responda com nomes! Mensagens: {personalized_message} . Comentario: {comment_text}."
         )
     
     else:
         prompt_text = ( 
             f"{prompt_text}"
-            f"message:{personalized_message} .Comentario: {comment_text}"
+            f"Não fique respondendo com a mesma mensagem sempre mensagem sobre a publicação e não responda com nomes! Mensagens:{personalized_message} .Comentario: {comment_text}"
         )
 
     # Remove caracteres fora do BMP
     prompt_text = remove_characters_outside_of_bmp(prompt_text)
 
-    driver.switch_to.active_element.send_keys(prompt_text)
+    for char in prompt_text:
+            driver.switch_to.active_element.send_keys(char)
+            time.sleep(0.01)
     driver.switch_to.active_element.send_keys(Keys.ENTER)
-    time.sleep(4)
+    time.sleep(25)
     response_container = driver.execute_script(""" 
         try {
             return document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerText;
@@ -94,10 +96,10 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
                 if (message) {
                     return message.innerText;
                 } else {
-                    return "Texto não encontrado usando XPath";
+                    return "Esse comentário não pode ser respondido";
                 }
             } catch (e) {
-                return "Texto não encontrado em todas as tentativas";
+                return "Esse comentário não pode ser respondido";
             }
         """)
         
@@ -107,25 +109,23 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
                 let message = document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerHTML;
                 return message;
             } catch (e) {
-                return "Texto não encontrado em todas as tentativas";
+                return "Esse comentário não pode ser respondido";
             }
         """)
-    time.sleep(2)
-    # Se a resposta foi encontrada, filtra para pegar apenas o que está dentro das aspas
+    time.sleep(15)
+
     if response_container:
-        # Usando expressão regular para encontrar o texto dentro das aspas
+      
         match = re.search(r'"(.*?)"', response_container)
         if match:
-            ia_response = match.group(1)  # Captura apenas o texto dentro das aspas
+            ia_response = match.group(1) 
         else:
-            ia_response = "Texto da IA não encontrado dentro das aspas"
-    else:
-        ia_response = "Texto não encontrado em todas as tentativas"
-
+            ia_response = response_container
+    time.sleep(15)
     ia_response = ia_response
     print(separation_line())
     print(f"Resposta da IA: {ia_response}")
-    time.sleep(2)
+    time.sleep(15)
     driver.close()
     driver.switch_to.window(driver.window_handles[0])
     return ia_response

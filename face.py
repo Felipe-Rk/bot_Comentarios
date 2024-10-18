@@ -1,11 +1,12 @@
 import re
+from telnetlib import EC
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
-from arquivos import check_response_block, upload_files_comments, generate_log_block, generate_log_other_content, generate_unique_file_name, separation_line, save_comments, timeout, generate_log_block
+from arquivos import check_response_block, save_comments_excel, save_comments_txt, upload_files_comments, generate_log_block, generate_log_other_content, generate_unique_file_name, separation_line, save_comments, timeout, generate_log_block
 from chromeDriver import start_driver
 from decorador import capturar_erros, register_execucao
 from ia import get_answer_ia
@@ -35,7 +36,7 @@ def verify_login_face(driver, url):
         except NoSuchElementException:
                 try:
                     print(separation_line())
-                    home_page_element = driver.find_element(By.XPATH, "//span[contains(@class, 'x1lliihq x6ikm8r x10wlt62 x1n2onr6 x1j85h84') and contains(text(), 'Criar story')]")
+                    home_page_element = driver.find_element(By.XPATH, "//a[@href='/stories/create/']")
                     print('Login realizado. Acessando publicação...')
                     driver.get(url)
                     time.sleep(5)
@@ -53,39 +54,34 @@ def load_all_comments(driver):
 
     while True:
         try:
-            # Primeiro, tenta encontrar pelo texto "Ver mais comentários"
+            # Tenta encontrar o botão "Ver mais comentários"
             ver_mais_comentarios = driver.find_element(By.XPATH, "//span[contains(text(), 'Ver mais comentários')]")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", ver_mais_comentarios)
+            driver.execute_script("arguments[0].click();", ver_mais_comentarios)
+            
+            # Espera até que novos comentários apareçam ou um timeout
+            time.sleep(2)  # Espera curta para carregar os novos comentários
+        except NoSuchElementException:
+            print("Não há mais comentários para carregar.")
+            break
         except Exception as e:
-            # print(f"Erro ao encontrar o botão pelo texto: {e}")
-            try:
-                # Se não encontrar pelo texto, encontra o container dos comentários
-                container_comentarios = driver.find_element(By.CLASS_NAME, 'x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x2lwn1j.x1odjw0f.x1n2onr6.x9ek82g.x6ikm8r.xdj266r.x11i5rnm.x4ii5y1.x1mh8g0r.xexx8yu.x1pi30zi.x18d9i69.x1swvt13')
-                # Em seguida, tenta encontrar o botão pelo CSS class
-                elementos = container_comentarios.find_elements(By.CLASS_NAME, 'x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.xdj266r.xat24cr.x1n2onr6.x1plvlek .xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.xl56j7k')
-                ver_mais_comentarios = None
-                for elemento in elementos:
-                    if elemento.text == 'Ver mais comentários':
-                        ver_mais_comentarios = elemento
-                        break
-            except Exception as e:
-                # print(f"Erro ao encontrar o botão pelo CSS class: {e}")
-                break
-
-        if ver_mais_comentarios:
-            try:
-                driver.execute_script("arguments[0].click();", ver_mais_comentarios)
-                
-            except Exception as e:
-                print(f"Erro ao clicar no botão: {e}")
-                break
-        else:
+            print(f"Erro ao clicar no botão: {e}")
             break
 
+        # Após clicar, espera explicitamente que mais comentários apareçam
+        try:
+            WebDriverWait(driver, 10).until(
+                lambda d: len(d.find_elements(By.XPATH, "//div[@class='x169t7cy x19f6ikt']")) > 0
+            )
+        except Exception as e:
+            print(f"Erro durante a espera do carregamento de comentários: {e}")
+            break
+        
 @register_execucao
 @capturar_erros
 def capture_comments(driver, url, current_user):
     # coments(driver, coments_all)
-    load_all_comments(driver)
+    # load_all_comments(driver)
     comment_containers = driver.find_elements(By.XPATH, "//div[@class='x169t7cy x19f6ikt']")
     if not comment_containers:
         print("Nenhum comentário encontrado. Verifique o XPath.")
@@ -93,6 +89,8 @@ def capture_comments(driver, url, current_user):
 
     comentarios = []
     comentarios_file = generate_unique_file_name(url)
+    comentarios_file_txt = generate_unique_file_name(url) + '.txt'
+    comentarios_file_excel = generate_unique_file_name(url) + '.xlsx'
     
     for index, container in enumerate(comment_containers):
         print(f"Lendo comentário {index + 1} de {len(comment_containers)}...")
@@ -104,13 +102,13 @@ def capture_comments(driver, url, current_user):
         except Exception:
             pass 
 
-        try:
-            ver_mais = container.find_element(By.XPATH, ".//div[contains(text(), 'Ver mais') and @role='button']")
-            driver.execute_script("arguments[0].scrollIntoView();", ver_mais)
-            ver_mais.click()
-            time.sleep(1)
-        except Exception:
-            pass
+        # try:
+        #     ver_mais = container.find_element(By.XPATH, ".//div[contains(text(), 'Ver mais') and @role='button']")
+        #     driver.execute_script("arguments[0].scrollIntoView();", ver_mais)
+        #     ver_mais.click()
+        #     time.sleep(1)
+        # except Exception:
+        #     pass
 
         user_name = container.find_element(By.XPATH, ".//a[contains(@class, 'x1i10hfl')]/span").text        
         comment_id = "comment_id não encontrado"
@@ -161,7 +159,9 @@ def capture_comments(driver, url, current_user):
         print(f"Comentário: {comment_text}")
         print(separation_line())
     save_comments(comentarios, comentarios_file)
-    return comentarios_file
+    save_comments_txt(comentarios, comentarios_file_txt)
+    save_comments_excel(comentarios, comentarios_file_excel)
+    return comentarios_file, comentarios_file_txt, comentarios_file_excel
 
 @register_execucao
 @capturar_erros
@@ -199,24 +199,24 @@ def reply_on_facebook(driver, comentario, ia_response):
         comentario_container = driver.find_element(By.XPATH, f"//div[@class='x169t7cy x19f6ikt' and descendant::a[contains(@href, 'comment_id={comentario['comment_id']}')]]")
         actions = ActionChains(driver)
         actions.move_to_element(comentario_container).perform()
-        time.sleep(1)
+        time.sleep(15)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", comentario_container)
-        time.sleep(1)
+        time.sleep(15)
         responder_button = comentario_container.find_element(By.XPATH, ".//div[@role='button' and @tabindex='0' and contains(text(), 'Responder')]")
         actions.move_to_element(responder_button).click().perform()
-        time.sleep(1)
+        time.sleep(15)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", comentario_container)
-        time.sleep(1)
+        time.sleep(15)
         actions = ActionChains(driver)
         for char in ia_response:
             actions.send_keys(char)
             actions.perform()
             time.sleep(0.01)   
-        time.sleep(1)
+        time.sleep(15)
         driver.switch_to.active_element.send_keys(Keys.RETURN)
         print(separation_line())
         print(f"Comentário respondido")
-        time.sleep(1)
+        time.sleep(15)
     except Exception as e:
         print(separation_line())
         raise  # Re-raise the exception to allow the decorator to handle it
@@ -231,29 +231,50 @@ def filtro(filtro_ativo):
             )
     return ""
 
-@capturar_erros
+# @capturar_erros
 def comments(driver, coments_all):
     actions = ActionChains(driver)
+
     if coments_all == "Todos":
         print("Capturar Todos os comentários")
-        comment_containers = driver.find_elements(By.XPATH, "//div[@class='html-div xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x18d9i69 x1swvt13 x1pi30zi']")
-        if comment_containers:
-            viewer_full = driver.find_element(By.XPATH, "//span[normalize-space(text())='Mais relevantes']")
-            actions.move_to_element(viewer_full).click().perform()
-            time.sleep(1)
-            full_containers = driver.find_elements(By.XPATH,"//div[@class='x4k7w5x x1h91t0o x1beo9mf xaigb6o x12ejxvf x3igimt xarpa2k xedcshv x1lytzrv x1t2pt76 x7ja8zs x1n2onr6 x1qrby5j x1jfb8zj'] ")
-            if full_containers:   
-                viewer_full_coments = driver.find_element(By.XPATH, "//span[normalize-space(text())='Todos os comentários']")
-                viewer_full_coments.click()
-                time.sleep(1)
-                return
-        
-    if coments_all == "Relevantes":
+        try:
+            comment_containers = driver.find_elements(By.XPATH, "//div[@class='html-div xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x18d9i69 x1swvt13 x1pi30zi']")
+            if comment_containers:
+                # Tentar clicar em 'Mais relevantes'
+                try:
+                    viewer_full = driver.find_element(By.XPATH, "//span[normalize-space(text())='Mais relevantes']")
+                    actions.move_to_element(viewer_full).click().perform()
+                    time.sleep(5)
+                except:
+                    print("Botão 'Mais relevantes' não encontrado, tentando 'Mais recentes'.")
+                    try:
+                        viewer_recent = driver.find_element(By.XPATH, "//span[normalize-space(text())='Mais recentes']")
+                        actions.move_to_element(viewer_recent).click().perform()
+                        time.sleep(5)
+                    except:
+                        print("Botão 'Mais recentes' não encontrado, tentando 'Comentários mais relevantes'.")
+                        try:
+                            viewer_most_relevant = driver.find_element(By.XPATH, "//span[normalize-space(text())='Comentários mais relevantes']")
+                            actions.move_to_element(viewer_most_relevant).click().perform()
+                            time.sleep(5)
+                        except Exception as e:
+                            print(f"Erro ao tentar clicar em 'Comentários mais relevantes': {e}")
+                
+                # Captura os contêineres de comentários completos
+                full_containers = driver.find_elements(By.XPATH, "//div[@class='x4k7w5x x1h91t0o x1beo9mf xaigb6o x12ejxvf x3igimt xarpa2k xedcshv x1lytzrv x1t2pt76 x7ja8zs x1n2onr6 x1qrby5j x1jfb8zj']")
+                if full_containers:
+                    # Localiza e clica no botão 'Todos os comentários'
+                    viewer_full_coments = driver.find_element(By.XPATH, "//span[normalize-space(text())='Todos os comentários']")
+                    viewer_full_coments.click()
+                else:
+                    print("Nenhum contêiner de comentário completo encontrado.")
+            else:
+                print("Nenhum contêiner de comentário encontrado.")
+        except Exception as e:
+            print(f"Erro ao tentar capturar todos os comentários: {e}")
+    
+    elif coments_all == "Relevantes":
         print('Capturar comentários relevantes')
-        return
-
-   
-
 
 @capturar_erros
 def construct_prompt_text(filtro_text):
@@ -279,21 +300,23 @@ def main(url, current_user, personalized_message, log_bloqueio_file,filtro_ativo
     verify_login_face(driver, url)
     comments(driver, coments_all)
     load_all_comments(driver)
+    
+    
     comentarios_file = capture_comments(driver, url, current_user)
     comentarios = upload_files_comments(comentarios_file)
     
-    filtro_text = filtro(filtro_ativo)
-    prompt_text = construct_prompt_text(filtro_text)
+    # filtro_text = filtro(filtro_ativo)
+    # prompt_text = construct_prompt_text(filtro_text)
     
-    reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
-    # driver.quit()
+    # reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
+    # # driver.quit()
 
 if __name__ == "__main__":
-    url = 'https://www.facebook.com/photo.php?fbid=143814774208809&set=pb.100057408622317.-2207520000&type=3'
+    url = 'https://www.facebook.com/photo?fbid=1574688380109739&set=gm.1313610649657021&idorvanity=325637761787653'
     current_user = "Felipe Roiko"
     personalized_message = "Responda de forma breve, direta e descontraída." 
     log_bloqueio_file = "log_bloqueio.txt" 
-    filtro_ativo = "Não"
-    coments_all = "Relevantes"
+    filtro_ativo = "Sim"
+    coments_all = "Todos"
     main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all) #log_bloqueio_file - remover para rodar somente essa pagina
 

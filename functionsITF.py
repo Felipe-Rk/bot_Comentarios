@@ -70,20 +70,23 @@ def executar_script(url, current_user, personalized_message, log_text, filtro_at
 @capturar_erros
 def abrir_log():
     try:
-        logs_directory = os.path.join(os.getcwd(), 'logs')
-        
-        if os.path.exists(logs_directory):
+        if getattr(sys, 'frozen', False):  # Verifica se o script está rodando como executável
+            log_directory = os.path.join(os.path.dirname(sys.executable), 'logs')  # Diretório 'logs' no mesmo local do executável
+        else:
+            log_directory = os.path.join(os.getcwd(), 'logs')  # Diretório 'logs' no ambiente de desenvolvimento
+
+        if os.path.exists(log_directory):
             if os.name == 'nt':  # Windows
-                os.startfile(logs_directory)
+                os.startfile(log_directory)
             elif os.name == 'posix':  # macOS ou Linux
-                os.system(f'open "{logs_directory}"')  # Para macOS
-                # os.system(f'xdg-open "{logs_directory}"')  # Para Linux
-            print(f"Pasta de logs aberta: {logs_directory}")
+                os.system(f'open "{log_directory}"')  # Para macOS
+                # os.system(f'xdg-open "{log_directory}"')  # Para Linux
+            print(f"Pasta de logs aberta: {log_directory}")
         else:
             print("Pasta de logs não encontrada.")
     except Exception as e:
         print(f"Erro ao abrir a pasta de logs: {e}")
-
+        
 @register_execucao
 @capturar_erros
 def apply_styles():

@@ -12,7 +12,7 @@ def main():
     windows.geometry("690x670")
     windows.configure(bg='#4682B4')
     windows.resizable(True, True)
-    windows.iconbitmap("ico\\interface.ico")
+    # windows.iconbitmap("ico\\interface.ico")
     
     apply_styles()
 
@@ -103,7 +103,7 @@ def main():
     label_comentarios = ttk.Label(container, text="Comentários:", background='#2C3E50', foreground='white', font=("Helvetica", 12))
     label_comentarios.grid(row=6, column=1, pady=10, padx=(10, 5), sticky='e')
 
-    comentarios_var = tk.StringVar(value="Relevantes")  # Valor padrão "Relevantes"
+    comentarios_var = tk.StringVar(value="Todos")  # Valor padrão "Relevantes"
     select_comentarios = ttk.Combobox(container, textvariable=comentarios_var, values=["Relevantes", "Todos"], state="readonly", width=10, font=("Helvetica", 12))
     select_comentarios.grid(row=6, column=2, pady=10, padx=(5, 10), sticky='w')
 
