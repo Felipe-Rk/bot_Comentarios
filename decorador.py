@@ -1,6 +1,7 @@
 import functools
 import os
 import datetime
+import traceback
 from arquivos import create_log_execucao, folder_system
 
 # Criar diretórios necessários e obter os caminhos
@@ -13,8 +14,13 @@ def capturar_erros(func):
             result = func(*args, **kwargs)
             return result
         except Exception as e:
-            create_log_execucao('url_ou_id', f"{func.__name__} - Erro ocorrido - {e}")  # 'url_ou_id' é um placeholder
+            # Captura o traceback completo em formato de string
+            error_trace = traceback.format_exc()
+            # Você pode customizar 'url_ou_id' conforme necessário ou passar como argumento
+            log_message = f"{func.__name__} - Erro ocorrido: {str(e)}\nDetalhes:\n{error_trace}"
+            create_log_execucao('url_ou_id', log_message)  
             print(f"Erro na função {func.__name__}: {e}")
+            print(f"Detalhes do erro:\n{error_trace}")  # Exibe o traceback completo no console
             return None
     return wrapper
 
@@ -24,13 +30,15 @@ def register_execucao(func):
         try:
             result = func(*args, **kwargs)
             if result is None:
-                create_log_execucao('url_ou_id', f"{func.__name__} - Finalizada com erro")
+                log_message = f"{func.__name__} - Finalizada com erro"
             else:
-                create_log_execucao('url_ou_id', f"{func.__name__} - Finalizada")
+                log_message = f"{func.__name__} - Finalizada com sucesso"
+            create_log_execucao('url_ou_id', log_message)
             return result
         except Exception as e:
-            create_log_execucao('url_ou_id', f"{func.__name__} - Finalizada com erro ")
-            # Note que o erro não é re-lançado, para manter o programa rodando
+            # Captura o traceback completo em formato de string
+            error_trace = traceback.format_exc()
+            log_message = f"{func.__name__} - Finalizada com erro: {str(e)}\nDetalhes:\n{error_trace}"
+            create_log_execucao('url_ou_id', log_message)
             return None
     return wrapper
-        

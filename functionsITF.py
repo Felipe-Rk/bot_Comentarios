@@ -4,18 +4,12 @@ import sys
 import io
 from tkinter import ttk
 import tkinter as tk
-from arquivos import save_log_block_comments
+from arquivos import save_log_block_comments, separation_line
 from decorador import capturar_erros, register_execucao
+from chromeDriver import start_driver  # Importa o driver inicializado do chromedriver.py
 
 # Variável global para armazenar o nome do arquivo de log
 log_bloqueio_file = None
-
-@register_execucao
-@capturar_erros
-class SilenciarErros(io.StringIO):
-    """Classe para silenciar qualquer mensagem enviada ao terminal."""
-    def write(self, message):
-        pass  # Ignora qualquer mensagem enviada
 
 @register_execucao
 @capturar_erros
@@ -28,29 +22,27 @@ class RedirectText(io.StringIO):
         self.text_widget.insert("end", message)
         self.text_widget.yview("end")
 
-def identificar_e_executar_script(url, current_user, personalized_message, log_text, filtro_ativo, coments_all):
+def identificar_e_executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
     global log_bloqueio_file
-    
-    # essa função deve ser ativa para limitar a execução
-    # comentario = "369745_s1d9_@egt%"
-    # total_comments = 2
-    # save_log_block_comments(comentario, total_comments)
+
     log_bloqueio_file = os.path.join('logs', f'bloqueio_{current_user}.txt')
 
-        # Redireciona stdout e stderr para silenciar as mensagens
-    sys.stdout = RedirectText(log_text)
-    sys.stderr = SilenciarErros()  # Silenciar erros no terminal
-    
-    sys.stdout = RedirectText(log_text)
-    sys.stderr = RedirectText(log_text)
-
     try:
+        driver = start_driver()  # Usa o driver inicializado do chromedriver.py
+
         if "facebook.com" in url:
-            from face import main as main_facebook
-            main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo,coments_all)
+            if funcao == "Localizar":
+                from localizar import main as main_localizar
+                main_localizar(url, id_comentario, log_text, driver)  # Passando o driver
+            elif funcao == "Responder":
+                from face import main as main_facebook
+                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all, extrair=False, driver=driver)  # Passando o driver
+            elif funcao == "Extrair":
+                from face import main as main_facebook
+                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all, extrair=True, driver=driver)  # Passando o driver
         elif "instagram.com" in url:
             from insta import main as main_instagram
-            main_instagram(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo)
+            main_instagram(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, driver=driver)  # Passando o driver
         else:
             print("URL não reconhecida. Por favor, insira uma URL válida do Facebook ou Instagram.")
     except Exception as e:
@@ -58,13 +50,13 @@ def identificar_e_executar_script(url, current_user, personalized_message, log_t
 
 @register_execucao
 @capturar_erros
-def executar_script_thread(url, current_user, personalized_message, log_text, filtro_ativo, coments_all):
-    threading.Thread(target=identificar_e_executar_script, args=(url, current_user, personalized_message, log_text, filtro_ativo, coments_all), daemon=True).start()
+def executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
+    threading.Thread(target=identificar_e_executar_script, args=(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all), daemon=True).start()
 
 @register_execucao
 @capturar_erros
-def executar_script(url, current_user, personalized_message, log_text, filtro_ativo, coments_all):
-    executar_script_thread(url, current_user, personalized_message, log_text, filtro_ativo, coments_all)
+def executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
+    executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all)
 
 @register_execucao
 @capturar_erros
@@ -86,7 +78,7 @@ def abrir_log():
             print("Pasta de logs não encontrada.")
     except Exception as e:
         print(f"Erro ao abrir a pasta de logs: {e}")
-        
+
 @register_execucao
 @capturar_erros
 def apply_styles():
@@ -103,7 +95,7 @@ def apply_styles():
     style.map('TButton',
               background=[('active', '#6B8E23')],
               foreground=[('active', 'black')])
-    
+
 class Tooltip:
     def __init__(self, widget, text):
         self.widget = widget
@@ -131,10 +123,3 @@ class Tooltip:
         self.tooltip_window = None
         if tw:
             tw.destroy()
-
-
-
-    
-# chave = "minha_chave"
-# limite_execucoes = 2
-# executar_com_limite(chave, limite_execucoes)

@@ -98,6 +98,7 @@ def save_comments_txt(comentarios, comentarios_file_txt):
             f.write(f"Respondido: {'Sim' if comentario['respondido'] else 'Não'}\n")
             f.write("-" * 50 + "\n")
     print("Comentários capturados e salvos em TXT.")
+    os.startfile(comentarios_file_txt)
 
 def save_comments_excel(comentarios, comentarios_file_excel):
     workbook = xlsxwriter.Workbook(comentarios_file_excel)

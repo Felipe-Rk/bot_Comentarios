@@ -250,7 +250,7 @@ def construct_prompt_text(filtro_text):
 
 @register_execucao
 @capturar_erros
-def main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo): #log_bloqueio_file - remover para rodar somente essa pagina
+def main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, driver): #log_bloqueio_file - remover para rodar somente essa pagina
     driver = abrir_instagram()
     check_login_insta(driver, url)
     load_list(driver)
@@ -260,7 +260,7 @@ def main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativ
     filtro_text = filtro(filtro_ativo)
     prompt_text = construct_prompt_text(filtro_text)
     
-    reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
+    reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message, driver)
     
     print("Processo concluído.")
     # driver.quit()

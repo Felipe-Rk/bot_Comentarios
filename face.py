@@ -12,7 +12,7 @@ from decorador import capturar_erros, register_execucao
 from ia import get_answer_ia
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def open_url(driver):
     print(separation_line())
     print('Abrindo Facebook')
@@ -21,7 +21,7 @@ def open_url(driver):
 
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def verify_login_face(driver, url):
     start_time = time.time()
     
@@ -47,7 +47,7 @@ def verify_login_face(driver, url):
                     time.sleep(20) 
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def load_all_comments(driver):
     print(separation_line())
     print("Carregando todos os comentários...")
@@ -78,7 +78,7 @@ def load_all_comments(driver):
             break
         
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def capture_comments(driver, url, current_user):
     # coments(driver, coments_all)
     # load_all_comments(driver)
@@ -161,10 +161,10 @@ def capture_comments(driver, url, current_user):
     save_comments(comentarios, comentarios_file)
     save_comments_txt(comentarios, comentarios_file_txt)
     save_comments_excel(comentarios, comentarios_file_excel)
-    return comentarios_file, comentarios_file_txt, comentarios_file_excel
+    return comentarios_file
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def check_response(container, current_user):
     try:
         response_indicator = container.find_element(
@@ -178,7 +178,7 @@ def check_response(container, current_user):
         return False
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message):
     for comentario in comentarios:
         if comentario['respondido']:
@@ -193,36 +193,36 @@ def reply_comments(driver, comentarios, comentarios_file, url, prompt_text, pers
         time.sleep(1)
 
 @register_execucao
-@capturar_erros
+# @capturar_erros
 def reply_on_facebook(driver, comentario, ia_response):
     try:
         comentario_container = driver.find_element(By.XPATH, f"//div[@class='x169t7cy x19f6ikt' and descendant::a[contains(@href, 'comment_id={comentario['comment_id']}')]]")
         actions = ActionChains(driver)
         actions.move_to_element(comentario_container).perform()
-        time.sleep(15)
+        time.sleep(1)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", comentario_container)
-        time.sleep(15)
+        time.sleep(1)
         responder_button = comentario_container.find_element(By.XPATH, ".//div[@role='button' and @tabindex='0' and contains(text(), 'Responder')]")
         actions.move_to_element(responder_button).click().perform()
-        time.sleep(15)
+        time.sleep(1)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", comentario_container)
-        time.sleep(15)
+        time.sleep(1)
         actions = ActionChains(driver)
         for char in ia_response:
             actions.send_keys(char)
             actions.perform()
             time.sleep(0.01)   
-        time.sleep(15)
+        time.sleep(1)
         driver.switch_to.active_element.send_keys(Keys.RETURN)
         print(separation_line())
         print(f"Comentário respondido")
-        time.sleep(15)
+        time.sleep(2)
     except Exception as e:
         print(separation_line())
         raise  # Re-raise the exception to allow the decorator to handle it
 
 
-@capturar_erros
+# @capturar_erros
 def filtro(filtro_ativo):
     
     if filtro_ativo == 'Sim':
@@ -276,7 +276,7 @@ def comments(driver, coments_all):
     elif coments_all == "Relevantes":
         print('Capturar comentários relevantes')
 
-@capturar_erros
+# @capturar_erros
 def construct_prompt_text(filtro_text):
     """Constrói o prompt_text com base no texto do filtro."""
     base_text = (
@@ -294,29 +294,46 @@ def construct_prompt_text(filtro_text):
   
 @register_execucao
 @capturar_erros       
-def main(url, current_user, personalized_message, log_bloqueio_file,filtro_ativo, coments_all): #log_bloqueio_file - remover para rodar somente essa pagina
-    driver = start_driver()
-    open_url(driver)
-    verify_login_face(driver, url)
-    comments(driver, coments_all)
-    load_all_comments(driver)
+def main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all, extrair, driver):  # Adicionando o parâmetro 'extrair' com valor padrão False
     
+    if extrair == False:
     
-    comentarios_file = capture_comments(driver, url, current_user)
-    comentarios = upload_files_comments(comentarios_file)
-    
-    # filtro_text = filtro(filtro_ativo)
-    # prompt_text = construct_prompt_text(filtro_text)
-    
-    # reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
-    # # driver.quit()
+        open_url(driver)
+        verify_login_face(driver, url)
+        comments(driver, coments_all)
+        load_all_comments(driver)
+        
+        comentarios_file = capture_comments(driver, url, current_user)
+        comentarios = upload_files_comments(comentarios_file)
+        
+        filtro_text = filtro(filtro_ativo)
+        prompt_text = construct_prompt_text(filtro_text)
+        
+        reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
 
-if __name__ == "__main__":
-    url = 'https://www.facebook.com/photo?fbid=1574688380109739&set=gm.1313610649657021&idorvanity=325637761787653'
-    current_user = "Felipe Roiko"
-    personalized_message = "Responda de forma breve, direta e descontraída." 
-    log_bloqueio_file = "log_bloqueio.txt" 
-    filtro_ativo = "Sim"
-    coments_all = "Todos"
-    main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all) #log_bloqueio_file - remover para rodar somente essa pagina
+    if extrair:
+        print("Executando lógica de extração adicional")
+
+        open_url(driver)
+        verify_login_face(driver, url)
+        comments(driver, coments_all)
+        load_all_comments(driver)
+        
+        comentarios_file = capture_comments(driver, url, current_user)
+        comentarios = upload_files_comments(comentarios_file)
+        print("Comentários extraidos com sucesso!")
+
+
+        
+        # Lógica de extração
+    # driver.quit()
+
+# if __name__ == "__main__":
+#     url = 'https://www.facebook.com/photo?fbid=1574688380109739&set=gm.1313610649657021&idorvanity=325637761787653'
+#     current_user = "Felipe Roiko"
+#     personalized_message = "Responda de forma breve, direta e descontraída." 
+#     log_bloqueio_file = "log_bloqueio.txt" 
+#     filtro_ativo = "Sim"
+#     coments_all = "Todos"
+#     main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all) #log_bloqueio_file - remover para rodar somente essa pagina
 
