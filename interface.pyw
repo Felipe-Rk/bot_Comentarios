@@ -1,18 +1,22 @@
 import sys
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, messagebox  
 from ttkthemes import ThemedTk
 from decorador import capturar_erros, register_execucao
 from functionsITF import Tooltip, apply_styles, executar_script, abrir_log,RedirectText
 
-# @register_execucao
-# @capturar_erros
+@register_execucao
+@capturar_erros
 def main():
     windows = ThemedTk(theme="radiance")
     windows.title("Gegenciador de comentários")
     windows.geometry("900x670")  # Aumentar a largura da janela
     windows.configure(bg='#4682B4')
     windows.resizable(True, True)
+
+     # Exibe o pop-up de saudação e bloqueia a interação até que o usuário clique em "OK"
+    messagebox.showinfo("Bem-vindo", "Bem-vindo ao Gerenciador de Comentários!Passe o mouse sobre o '?' para verificar como funciona.\n"
+                         "Pressione OK para continuar.")
 
     apply_styles()
 
@@ -89,10 +93,12 @@ def main():
     entry_usuario = ttk.Entry(container, width=50)
     entry_usuario.grid(row=2, column=1, pady=10, padx=10, sticky='ew')
 
+    entry_usuario.insert(0, "Samuel Dantas")
+
     label_funcao = ttk.Label(container, text="Função:")
     label_funcao.grid(row=3, column=0, pady=10, padx=10, sticky='w')
 
-    funcao_var = tk.StringVar(value="Localizar")
+    funcao_var = tk.StringVar(value="Extrair")
     select_funcao = ttk.Combobox(container, textvariable=funcao_var, values=["Localizar", "Responder", "Extrair"], state="readonly", width=20)
     select_funcao.grid(row=3, column=1, pady=10, padx=10, sticky='w')
 
@@ -126,9 +132,9 @@ def main():
     log_text = scrolledtext.ScrolledText(windows, wrap=tk.WORD, height=20, width=60, bg='#1C1C1C', fg='white', font=('Helvetica', 12))
     log_text.grid(row=1, column=1, padx=10, pady=10, sticky='nsew')
     
-        # Redirecionar a saída padrão e de erro para o widget log_text
-    sys.stdout = RedirectText(log_text)  # Redireciona stdout
-    sys.stderr = RedirectText(log_text)  # Redireciona stder
+    # Redirecionar a saída padrão e de erro para o widget log_text
+    sys.stdout = RedirectText(log_text)  
+    sys.stderr = RedirectText(log_text)  
 
     # Botões estilizados (abaixo das opções de escrita)
     btn_executar = ttk.Button(container, text="Executar", command=lambda: executar_script(entry_url.get(), entry_usuario.get(), funcao_var.get(), entry_id_comentario.get(), entry_message.get(), filtro_var.get(), comentarios_var.get(), log_text))
