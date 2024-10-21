@@ -159,3 +159,22 @@ def save_log_block_comments(comentario, total_comentarios):
         arquivo.write(f'Chave:{comentario}\nExecucoes:{execucoes_registradas}')
 
     print(f"Executando pela {execucoes_registradas}ª vez.")
+
+def check_stop_signal():
+    """
+    Verifica se o arquivo de sinalização stop_signal.txt existe.
+    Retorna True se o arquivo existir, indicando que o processo deve parar.
+    Exclui o arquivo após a verificação.
+    """
+    stop_signal_path = os.path.join(dados_path, 'stop_signal.txt')
+    if os.path.exists(stop_signal_path):
+        os.remove(stop_signal_path)
+        return True
+    return False
+
+# Função para criar o arquivo de sinalização de parada
+def create_stop_signal():
+    stop_signal_path = os.path.join(dados_path, 'stop_signal.txt')
+    with open(stop_signal_path, 'w') as f:
+        f.write('stop')
+    print("Arquivo de parada criado.")

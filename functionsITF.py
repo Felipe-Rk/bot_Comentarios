@@ -22,7 +22,7 @@ class RedirectText(io.StringIO):
         self.text_widget.insert("end", message)
         self.text_widget.yview("end")
 
-def identificar_e_executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
+def identificar_e_executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo):
     global log_bloqueio_file
 
     log_bloqueio_file = os.path.join('logs', f'bloqueio_{current_user}.txt')
@@ -36,10 +36,10 @@ def identificar_e_executar_script(url, current_user, funcao, id_comentario, pers
                 main_localizar(url, id_comentario, log_text, driver)  # Passando o driver
             elif funcao == "Responder":
                 from face import main as main_facebook
-                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all, extrair=False, driver=driver)  # Passando o driver
+                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, extrair=False, driver=driver)  # Passando o driver
             elif funcao == "Extrair":
                 from face import main as main_facebook
-                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, coments_all, extrair=True, driver=driver)  # Passando o driver
+                main_facebook(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, extrair=True, driver=driver)  # Passando o driver
         elif "instagram.com" in url:
             from insta import main as main_instagram
             main_instagram(url, current_user, personalized_message, log_bloqueio_file, filtro_ativo, driver=driver)  # Passando o driver
@@ -50,13 +50,13 @@ def identificar_e_executar_script(url, current_user, funcao, id_comentario, pers
 
 @register_execucao
 @capturar_erros
-def executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
-    threading.Thread(target=identificar_e_executar_script, args=(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all), daemon=True).start()
+def executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo):
+    threading.Thread(target=identificar_e_executar_script, args=(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo), daemon=True).start()
 
 @register_execucao
 @capturar_erros
-def executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all):
-    executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo, coments_all)
+def executar_script(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo):
+    executar_script_thread(url, current_user, funcao, id_comentario, personalized_message, log_text, filtro_ativo)
 
 @register_execucao
 @capturar_erros

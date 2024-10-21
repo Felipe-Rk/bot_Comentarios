@@ -11,30 +11,48 @@ Funcionalidades
 - Filtro de Comentários: Aplicação de filtros para gerenciar comentários ofensivos ou irrelevantes.
 - Opção de Comentários: Seleção para responder a todos comentários da publicação ou somente os relevantes.
 
-Requisitos
-Python 3.x: Versão 3.6 ou superior.
-Bibliotecas Python:
-tkinter (para a interface gráfica)
-selenium (para automação do navegador)
-ttkthemes (para temas da interface gráfica)
-re (para manipulação de expressões regulares)
-ChromeDriver (para automação do código com o google chromer)
-
-
 Uso
 Configuração:
 
-Abra o arquivo interface.pyw para iniciar a interface gráfica.
-Na Interface Gráfica:
+Para executar o código em um software de desenvolvimento, exemplo: Visual Estudio Code, primeiro instale o arquivo 
+> requirements.Txt
+após finalizar a instalação das biblitecas e extenções execute o arquivo > interface.pyw
 
+FUNÇÔES: 
+
+> Responder: 
+Extrai todos os comentários para 3 arquivos (Json,Txt,Xlxs)
+Verifica os comentários não respondidos
+Responde utilizando a IA e a Mensagem personalizada 
+Fica em execução sobre a postagem enquanto o navegador estiver aberto, o software ou até ser apertado o botão PARAR.
+
+> Extrair: 
+Extrai todos os comentários para 3 arquivos (Json,Txt,Xlxs)
+Verifica os comentários não respondidos
+Ao gerar o arquivo ele abre o TXT para utilizar a função de localizar. 
+
+> Localizar:
+Com o arquivo TXT aberto, pode utilizar o Ctrl + F para buscar filtros = não.
+Comentários que estiverem com o campo - Foi respondido: não, serão localizados pelo atalho da linha a cima
+Copiar o ID do comentário referente ao comentário não respondido 
+Colar na interface no campo ID Comentário, e clicar em executar, ele irá apresentar no navegador aberto com o primeiro 
+comentário da lista.
+
+---------------------------------------------------------------------------------------------------
+UTILIZAÇÂO
+
+Responde: 
 > Insira a URL do post no campo "Link", Facebook ou Instagram, ele irá reconhecer sozinho.
 > Preencha o nome de usuário no campo "Nome do Usuário", para definir se o usuário ja respondeu ao comentário ou não.
 >Adicione uma mensagem personalizada se desejar, quanto mais clara a mensagem, melhor a IA irá responder, pode ser a legenda do post ou algo relacionado
 >Selecione as opções de filtro e tipo de comentários conforme necessário.
-Executar:
 
 Clique em "Executar" para iniciar o processo de automação.
 *Na primeira execução vai ser pedido para logar a rede social e tambem na página da IA para uma melhor utilização.
+
+Ele ficará executando a cada 5m na publicação para verificar novos comentários.
+para finalizar a execução do bot, feche a interface, ou o navegador ou click em PARAR.
+
 
 Visualizar Logs:
 
