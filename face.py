@@ -332,14 +332,22 @@ def main(url, current_user, personalized_message, log_bloqueio_file, filtro_ativ
         load_all_comments(driver)
         
         while not check_stop_signal():
-            comentarios_file = capture_comments(driver, url, current_user, extrair)
-            comentarios = upload_files_comments(comentarios_file)
-            
-            filtro_text = filtro(filtro_ativo)
-            prompt_text = construct_prompt_text(filtro_text)
-            
-            reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
-            time.sleep(5)  # Pequena pausa entre iterações
+                    comentarios_file = capture_comments(driver, url, current_user, extrair)
+                    comentarios = upload_files_comments(comentarios_file)
+                    
+                    filtro_text = filtro(filtro_ativo)
+                    prompt_text = construct_prompt_text(filtro_text)
+                    
+                    reply_comments(driver, comentarios, comentarios_file, url, prompt_text, personalized_message)
+                    print("Aguardando 5 minutos para a próxima verificação!")
+                    time.sleep(300)  # Pequena pausa entre iterações
+                    
+                    # Recarregar a página e reiniciar o processo
+                    print("Recarregando a página para nova verificação.")
+                    driver.refresh()
+                    verify_login_face(driver, url)
+                    comments(driver, coments_all)
+                    load_all_comments(driver)
             
         print("Sinal de parada detectado. Finalizando iteração.")
     else:

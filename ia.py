@@ -79,61 +79,34 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
             time.sleep(0.01)
     driver.switch_to.active_element.send_keys(Keys.ENTER)
     time.sleep(5)
-    # response_container = driver.execute_script(""" 
-    #     try {
-    #         return document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerText;
-    #     } catch (e) {
-    #         return null;
-    #     }
-    # """)
-    # if not response_container:
-    #     response_container = driver.execute_script(""" 
-    #         try {
-    #             let message = document.evaluate(
-    #                 '//*[@id="app"]/main/div[3]/div/div/div[2]/div/div[2]', 
-    #                 document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                
-    #             if (message) {
-    #                 return message.innerText;
-    #             } else {
-    #                 return "Esse comentário não pode ser respondido";
-    #             }
-    #         } catch (e) {
-    #             return "Esse comentário não pode ser respondido";
-    #         }
-    #     """)
-        
-    # if not response_container or response_container.startswith("Texto não encontrado"):
-    #     response_container = driver.execute_script(""" 
-    #         try {
-    #             let message = document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerHTML;
-    #             return message;
-    #         } catch (e) {
-    #             return "Esse comentário não pode ser respondido";
-    #         }
-    #     """)
-
     response_container = driver.execute_script(""" 
         try {
-            let message = document.evaluate(
-                '//*[@id="app"]/main/div[3]/div/div[2]/div[1]/div[last()]/div/p/span', 
-                document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            
-            if (message) {
-                return message.innerText;
-            } else {
-                return "Esse comentário não pode ser respondido";
-            }
+            return document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerText;
         } catch (e) {
-            return "Esse comentário não pode ser respondido";
+            return null;
         }
     """)
-
-    # Fallback: se ainda não encontrou o texto ou o texto retornado foi inadequado
+    if not response_container:
+        response_container = driver.execute_script(""" 
+            try {
+                let message = document.evaluate(
+                    '//*[@id="app"]/main/div[3]/div/div/div[2]/div/div[2]', 
+                    document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                
+                if (message) {
+                    return message.innerText;
+                } else {
+                    return "Esse comentário não pode ser respondido";
+                }
+            } catch (e) {
+                return "Esse comentário não pode ser respondido";
+            }
+        """)
+        
     if not response_container or response_container.startswith("Texto não encontrado"):
         response_container = driver.execute_script(""" 
             try {
-                let message = document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2):last-child").innerHTML;
+                let message = document.querySelector("#app > main > div.h-dvh > div > div > div.min-h-[calc(100dvh-60px-var(--composer-container-height))].sm\\:min-h-[calc(100dvh-120px-var(--composer-container-height))] > div > div:nth-child(2)").innerHTML;
                 return message;
             } catch (e) {
                 return "Esse comentário não pode ser respondido";
@@ -142,8 +115,9 @@ def get_answer_ia(driver, comment_text,prompt_text, personalized_message=None):
     time.sleep(5)
     if response_container:
         # Remove a parte relacionada ao "Copilot" ou outras palavras indesejadas
-        response_container = re.sub(r'Copilot.*?$', '', response_container).strip()
+        response_container = re.sub(r'(?i)copilot.*?$', '', response_container).strip()
 
+        # Extrai o conteúdo dentro das aspas, se presente
         match = re.search(r'"(.*?)"', response_container)
         if match:
             ia_response = match.group(1)
