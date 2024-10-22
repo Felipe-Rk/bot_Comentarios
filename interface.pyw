@@ -95,8 +95,6 @@ def main():
     entry_usuario = ttk.Entry(container, width=50)
     entry_usuario.grid(row=2, column=1, pady=10, padx=10, sticky='ew')
 
-    entry_usuario.insert(0, "Samuel Dantas")
-
     label_funcao = ttk.Label(container, text="Função:")
     label_funcao.grid(row=3, column=0, pady=10, padx=10, sticky='w')
 
